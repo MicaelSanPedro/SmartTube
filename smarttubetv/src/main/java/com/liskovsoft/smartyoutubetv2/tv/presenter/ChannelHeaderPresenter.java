@@ -24,13 +24,13 @@ import androidx.leanback.widget.SpeechOrbView;
 import androidx.leanback.widget.SpeechRecognitionCallback;
 
 import com.liskovsoft.sharedutils.helpers.Helpers;
-import com.liskovsoft.sharedutils.helpers.KeyHelpers;
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.sharedutils.helpers.PermissionHelpers;
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
 import com.liskovsoft.smartyoutubetv2.common.prefs.SearchData;
 import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
 import com.liskovsoft.smartyoutubetv2.tv.R;
+import com.liskovsoft.smartyoutubetv2.tv.util.KeyboardFix;
 import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
 
 import net.gotev.speech.GoogleVoiceTypingDisabledException;
@@ -115,13 +115,13 @@ public class ChannelHeaderPresenter extends RowPresenter {
             Log.d(TAG, "on search field focused");
 
             if (mIsKeyboardAutoShowEnabled && focused) {
-                Helpers.showKeyboardAlt(v.getContext(), v);
+                // Fix: showSoftInput sometimes silently fails. Retry with escalating strategies.
+                KeyboardFix.showKeyboard(v.getContext(), v);
             }
         });
 
-        if (mIsKeyboardFixEnabled) {
-            KeyHelpers.fixEnterKey(searchTextEditor);
-        }
+        // Fix: OK/Enter on the field should always open the IME; repair dead InputConnection.
+        KeyboardFix.installSoftInputFix(searchTextEditor);
 
         searchOrbView.setOnFocusChangeListener((v, focused) -> {
             if (focused) {

@@ -11,11 +11,11 @@ import android.widget.EditText;
 
 import androidx.leanback.widget.Presenter;
 
-import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.browse.video.GridFragmentHelper;
+import com.liskovsoft.smartyoutubetv2.tv.util.KeyboardFix;
 import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
 
 public class SearchFieldPresenter extends Presenter {
@@ -53,8 +53,12 @@ public class SearchFieldPresenter extends Presenter {
 
         editField.setOnClickListener(v -> {
             Log.d(TAG, "On click");
-            Helpers.showKeyboardAlt(v.getContext(), v);
+            // Fix: showSoftInput sometimes silently fails. Retry with escalating strategies.
+            KeyboardFix.showKeyboard(v.getContext(), v);
         });
+
+        // Fix: OK/Enter on the field should always open the IME; repair dead InputConnection.
+        KeyboardFix.installSoftInputFix(editField);
 
         return new ViewHolder(contentView);
     }

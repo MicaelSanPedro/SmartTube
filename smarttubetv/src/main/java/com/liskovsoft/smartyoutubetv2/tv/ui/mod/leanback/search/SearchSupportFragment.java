@@ -38,11 +38,11 @@ import androidx.leanback.widget.SpeechOrbView;
 import androidx.leanback.widget.SpeechRecognitionCallback;
 import androidx.leanback.widget.VerticalGridView;
 import com.liskovsoft.sharedutils.helpers.Helpers;
-import com.liskovsoft.sharedutils.helpers.KeyHelpers;
 import com.liskovsoft.sharedutils.helpers.MessageHelpers;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.BuildConfig;
+import com.liskovsoft.smartyoutubetv2.tv.util.KeyboardFix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -356,7 +356,9 @@ public class SearchSupportFragment extends Fragment {
             }
 
             if (mIsKeyboardAutoShowEnabled && focused) {
-                Helpers.showKeyboardAlt(v.getContext(), v);
+                // Fix: showSoftInput sometimes silently fails (window focus race, IME just dismissed).
+                // Retry with escalating strategies until the keyboard is really up.
+                KeyboardFix.showKeyboard(v.getContext(), v);
             }
         });
         mSearchTextEditor.addTextChangedListener(new TextWatcher() {
@@ -375,9 +377,11 @@ public class SearchSupportFragment extends Fragment {
                 Utils.enableScreensaver(getActivity(), true);
             }
         });
-        if (mIsKeyboardFixEnabled) {
-            KeyHelpers.fixEnterKey(mSearchTextEditor);
-        }
+        // Fix: OK (DPAD_CENTER) / Enter on the field should always open the IME,
+        // and a dead InputConnection (keyboard up, typing does nothing) should be repaired.
+        // Supersedes the old KeyHelpers.fixEnterKey() which only handled the Enter key
+        // and used a single unreliable showSoftInput() call.
+        KeyboardFix.installSoftInputFix(mSearchTextEditor);
         if (mIsTypingCorrectionDisabled) {
             mSearchTextEditor.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
         }
