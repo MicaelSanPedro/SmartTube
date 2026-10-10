@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fork intro screen (MicaelSanPedro) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D0D11"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="116dp"
+            android:layout_height="116dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <View
+                android:id="@+id/fork_splash_glow"
+                android:layout_width="320dp"
+                android:layout_height="320dp"
+                android:layout_gravity="center"
+                android:background="@drawable/fork_splash_glow"/>
+
+            <ImageView
+                android:id="@+id/fork_splash_icon"
+                android:layout_width="116dp"
+                android:layout_height="116dp"
+                android:contentDescription="@string/app_name"
+                android:src="@mipmap/app_icon"/>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/fork_splash_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.05"
+            android:text="@string/app_name"
+            android:textColor="#FFFFFF"
+            android:textSize="38sp"
+            android:textStyle="bold"/>
+
+        <View
+            android:id="@+id/fork_splash_divider"
+            android:layout_width="64dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/fork_splash_divider"/>
+
+        <TextView
+            android:id="@+id/fork_splash_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="#B9B9C3"
+            android:textSize="17sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/fork_splash_credits"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="28dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/fork_splash_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#70707A"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="baseado no SmartTube original, por yuliskov"
+            android:textColor="#55555E"
+            android:textSize="11sp"/>
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Soft red glow behind the app icon on the fork intro screen -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="160dp"
+        android:startColor="#33FF4B3A"
+        android:centerColor="#17FF4B3A"
+        android:endColor="#00FF4B3A"/>
+</shape>
