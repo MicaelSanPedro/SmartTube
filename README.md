@@ -1,3 +1,15 @@
+> [!IMPORTANT]
+> **This is a personal fork, not the official SmartTube app.**
+> Original project: [yuliskov/SmartTube](https://github.com/yuliskov/SmartTube) — all credits and thanks to [@yuliskov](https://github.com/yuliskov) and the community.
+> This fork is maintained by **[@MicaelSanPedro](https://github.com/MicaelSanPedro)** with personal quality-of-life improvements. Official downloads, releases and support remain on the original repository.
+
+> [!NOTE]
+> **Este é um fork pessoal, não é o app SmartTube oficial.**
+> Projeto original: [yuliskov/SmartTube](https://github.com/yuliskov/SmartTube) — todos os créditos e agradecimentos ao [@yuliskov](https://github.com/yuliskov) e à comunidade.
+> Este fork é mantido por **[@MicaelSanPedro](https://github.com/MicaelSanPedro)** com melhorias pessoais de usabilidade. Downloads oficiais, releases e suporte continuam no repositório original.
+
+---
+
 [<img src="images/badge_fdroid.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/app.smarttube.fdroid/)
 [<img src="images/badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/yuliskov/SmartTube/releases)
 
