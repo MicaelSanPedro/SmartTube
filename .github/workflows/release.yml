@@ -1,0 +1,188 @@
+# Pipeline de release do fork (MicaelSanPedro)
+# Como usar:
+#   1) Push de uma tag nova (ex: v32.65-fork.1), OU
+#   2) Aba Actions -> "Release do Fork" -> Run workflow -> informar a tag
+# O pipeline: compila -> assina com a keystore dos Secrets -> verifica ->
+#             publica a release -> REBAIXA os APKs publicados e verifica de novo.
+
+name: Release do Fork
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da release (ex: v32.65-fork.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Compilar, assinar e publicar
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout (com submódulos)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Definir tag da release
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Aceitar licenças do Android SDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Cache do Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Compilar APKs (ststable release)
+        run: ./gradlew :smarttubetv:assembleStstableRelease --no-daemon --stacktrace
+
+      - name: Restaurar keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/fork.keystore"
+          chmod 600 "$RUNNER_TEMP/fork.keystore"
+
+      - name: Assinar APKs
+        env:
+          KS_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KS_STORE_PASS: ${{ secrets.KEYSTORE_STORE_PASS }}
+          KS_KEY_PASS: ${{ secrets.KEYSTORE_KEY_PASS }}
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          echo "Usando: $APKSIGNER"
+          mkdir -p signed
+          for apk in smarttubetv/build/outputs/apk/ststable/release/*.apk; do
+            name="$(basename "$apk")"
+            "$APKSIGNER" sign \
+              --ks "$RUNNER_TEMP/fork.keystore" \
+              --ks-key-alias "$KS_ALIAS" \
+              --ks-pass "pass:$KS_STORE_PASS" \
+              --key-pass "pass:$KS_KEY_PASS" \
+              --out "signed/$name" "$apk"
+            echo "assinado: $name"
+          done
+
+      - name: Verificação 1 - assinaturas locais
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          total=0
+          for apk in signed/*.apk; do
+            "$APKSIGNER" verify "$apk" || { echo "FALHOU: $apk"; exit 1; }
+            "$APKSIGNER" verify --print-certs "$apk" | grep -q "CN=MicaelSanPedro" || { echo "Certificado errado: $apk"; exit 1; }
+            size="$(stat -c%s "$apk")"
+            [ "$size" -gt 1000000 ] || { echo "APK suspeito (pequeno demais): $apk"; exit 1; }
+            total=$((total+1))
+            echo "OK: $(basename "$apk") ($((size / 1048576)) MB)"
+          done
+          echo "Total assinado e verificado: $total APK(s)"
+
+      - name: Montar notas da release
+        run: |
+          python3 - "${{ steps.tag.outputs.tag }}" << 'PYEOF'
+          import glob
+          import os
+          import sys
+
+          tag = sys.argv[1]
+          mapping = {
+              "universal": "qualquer dispositivo (opção segura)",
+              "arm64-v8a": "TVs e boxes modernas (ARM 64-bit)",
+              "armeabi-v7a": "dispositivos mais antigos (ARM 32-bit)",
+              "x86": "emuladores e dispositivos x86",
+          }
+          rows = []
+          for apk in sorted(glob.glob("signed/*.apk")):
+              name = os.path.basename(apk)
+              desc = next((d for key, d in mapping.items() if key in name), "-")
+              rows.append("| `%s` | %s |" % (name, desc))
+          with open(".github/release-template.md", encoding="utf-8") as f:
+              template = f.read()
+          notes = template.replace("__TAG__", tag).replace("__TABELA__", "\n".join(rows))
+          with open("notes.md", "w", encoding="utf-8") as f:
+              f.write(notes)
+          print("notes.md pronto")
+          PYEOF
+
+      - name: Remover release antiga (se existir)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG já existia — removendo pra republicar"
+            gh release delete "$TAG" --yes --cleanup-tag || gh release delete "$TAG" --yes || true
+          fi
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh release create "$TAG" signed/*.apk \
+            --title "SmartTube Fork $TAG" \
+            --notes-file notes.md \
+            --latest
+          echo "Release publicada: $TAG"
+
+  verify:
+    name: Conferir a release publicada
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Definir tag da release
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Baixar assets da release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          mkdir -p downloaded
+          gh release download "$TAG" -D downloaded --pattern '*.apk'
+          ls -la downloaded
+
+      - name: Verificação 2 - re-conferir APKs já publicados
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          for parte in universal arm64-v8a armeabi-v7a x86; do
+            apk="$(ls downloaded/*"${parte}"*.apk 2>/dev/null | head -1)"
+            if [ -z "$apk" ]; then
+              echo "FALTA asset: *$parte*"
+              exit 1
+            fi
+            "$APKSIGNER" verify "$apk" || { echo "Assinatura inválida: $apk"; exit 1; }
+            "$APKSIGNER" verify --print-certs "$apk" | grep -q "CN=MicaelSanPedro" || { echo "Certificado errado: $apk"; exit 1; }
+            echo "OK na release: $(basename "$apk")"
+          done
+          echo "Robozinho conferiu tudo — release 100% válida."
