@@ -22,6 +22,7 @@ import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.PresenterSelector;
 import androidx.leanback.widget.TitleHelper;
 import com.liskovsoft.sharedutils.helpers.Helpers;
+import com.liskovsoft.mediaserviceinterfaces.data.MediaGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.BrowseSection;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.SettingsGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
@@ -241,6 +242,52 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         }
 
         return (int) ((PageRow) mSectionRowAdapter.get(getSelectedPosition())).getHeaderItem().getId();
+    }
+
+    /**
+     * Fork: ha um erro em tela (ErrorSupportFragment embutido)?<br/>
+     * Nesse caso o BACK nao deve ser sequestrado pelo comportamento estilo YouTube.
+     */
+    public boolean forkIsErrorShowing() {
+        return getMainFragment() instanceof ErrorDialogFragment;
+    }
+
+    /**
+     * Fork: tecla BACK estilo YouTube.<br/><br/>
+     * 1) Barra lateral aberta -> fecha e devolve o foco pro conteudo;<br/>
+     * 2) Fora da aba Inicio -> vai para o Inicio;<br/>
+     * 3) Ja no Inicio -> retorna false (a atividade entao dispara o fluxo de saida:
+     * "Pressione novamente para sair" + sair no segundo aperto).<br/><br/>
+     * Retorna true se o evento foi consumido.
+     */
+    public boolean forkHandleBackKey() {
+        // Barra lateral aberta: fecha e volta o foco pro conteudo
+        if (isShowingHeaders()) {
+            focusOnContent();
+            return true;
+        }
+
+        // Fora do Inicio: vai para o Inicio
+        if (getSelectedHeaderId() != MediaGroup.TYPE_HOME) {
+            int homeIndex = -1;
+
+            for (int i = 0; i < mSectionRowAdapter.size(); i++) {
+                PageRow row = (PageRow) mSectionRowAdapter.get(i);
+
+                if (row.getHeaderItem().getId() == MediaGroup.TYPE_HOME) {
+                    homeIndex = i;
+                    break;
+                }
+            }
+
+            if (homeIndex >= 0) {
+                selectSection(homeIndex, true);
+                return true;
+            }
+        }
+
+        // Ja no Inicio (ou aba Inicio desativada): nao consome
+        return false;
     }
     
     public void updateErrorIfEmpty(ErrorFragmentData data) {

@@ -59,8 +59,8 @@ android {
         targetSdkVersion project.properties.targetSdkVersion
         // Fork: versionCode incrementado por release do fork (o updater do app
         // compara versionCode contra o JSON do proprio fork).
-        versionCode 2455
-        versionName "32.64-fork.2"
+        versionCode 2456
+        versionName "32.64-fork.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
