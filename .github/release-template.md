@@ -4,6 +4,10 @@ Fork pessoal do SmartTube mantido por [@MicaelSanPedro](https://github.com/Micae
 
 __TABELA__
 
+## O que há de novo
+
+__CHANGELOG__
+
 ## ⚠️ Antes de instalar
 
 Esta build é assinada com a chave própria do fork. Se você já tem o SmartTube oficial (ou de outra fonte) instalado, **desinstale-o antes de instalar esta versão** — as configurações locais serão redefinidas.

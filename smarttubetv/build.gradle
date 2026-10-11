@@ -57,8 +57,10 @@ android {
         applicationId "app.smarttube"
         minSdkVersion project.properties.minSdkVersion
         targetSdkVersion project.properties.targetSdkVersion
-        versionCode 2454
-        versionName "32.64"
+        // Fork: versionCode incrementado por release do fork (o updater do app
+        // compara versionCode contra o JSON do proprio fork).
+        versionCode 2455
+        versionName "32.64-fork.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 

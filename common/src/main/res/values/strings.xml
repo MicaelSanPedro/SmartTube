@@ -756,4 +756,11 @@
         <item quantity="one">%s second</item>
         <item quantity="other">%s seconds</item>
     </plurals>
+    <!-- Fork Edition (nao traduzir) -->
+    <string name="fork_about_title" translatable="false">Sobre este fork</string>
+    <string name="fork_about_repo" translatable="false">Fork por MicaelSanPedro — abrir no GitHub</string>
+    <string name="fork_about_releases" translatable="false">Releases do fork</string>
+    <string name="fork_author" translatable="false">MicaelSanPedro</string>
+    <string name="fork_splash_subtitle_fmt" translatable="false">Fork por %s</string>
+    <string name="fork_splash_credits" translatable="false">baseado no SmartTube original, por yuliskov</string>
 </resources>

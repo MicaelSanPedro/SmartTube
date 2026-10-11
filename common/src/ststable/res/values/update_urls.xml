@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="update_urls">
-        <item>https://github.com/yuliskov/SmartTubeNext/releases/download/latest/smarttube_stable2.json</item>
+        <!-- Fork: JSON de atualizacao publicado pelo proprio pipeline do fork
+             (asset da release marcada como 'latest' -> URL estavel). -->
+        <item>https://github.com/MicaelSanPedro/SmartTube/releases/latest/download/smarttube_fork2.json</item>
     </string-array>
 </resources>

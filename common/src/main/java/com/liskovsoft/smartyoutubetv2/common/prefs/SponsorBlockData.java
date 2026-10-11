@@ -24,6 +24,12 @@ public class SponsorBlockData {
     public static final int ACTION_SHOW_DIALOG = 2;
     public static final int ACTION_DO_NOTHING = 3;
     private static final String SPONSOR_BLOCK_DATA = "content_block_data";
+    // Fork fix: copia de seguranca em outro subsistema de storage (SharedPreferences).
+    // O storage primario e um arquivo simples que pode ser perdido/truncado/corrompido
+    // (escrita nao-atomica em FileHelpers, processo morto pelo sistema, restore de
+    // cloud backup do sistema) — o que reinicia as acoes do SponsorBlock pro default
+    // (upstream issue: 'SponsorBlock settings revert to default after exit / restart').
+    private static final String SPONSOR_BLOCK_DATA_SHADOW = "content_block_data_shadow";
     @SuppressLint("StaticFieldLeak")
     private static SponsorBlockData sInstance;
     private final AppPrefs mAppPrefs;
@@ -245,7 +251,33 @@ public class SponsorBlockData {
     private void restoreState() {
         String data = mAppPrefs.getData(SPONSOR_BLOCK_DATA);
 
+        boolean actionsRestored = parseState(data);
+
+        // Fork fix: auto-reparo. Se as acoes nao puderam ser restauradas do storage
+        // primario (arquivo perdido/vazio/corrompido), tenta a copia-sombra.
+        if (!actionsRestored) {
+            String shadow = mAppPrefs.getString(SPONSOR_BLOCK_DATA_SHADOW, null);
+
+            if (shadow != null && !Helpers.equals(shadow, data)) {
+                if (parseState(shadow)) {
+                    mAppPrefs.setData(SPONSOR_BLOCK_DATA, shadow); // repara o storage primario
+                }
+            }
+        }
+    }
+
+    /**
+     * Fork: parse do estado serializado. Retorna true se pelo menos uma acao
+     * valida foi restaurada (sem isso o restoreState aplica os defaults).
+     */
+    private boolean parseState(String data) {
         String[] split = Helpers.splitData(data);
+
+        boolean actionsRestored = false;
+
+        mActions.clear();
+        mColorCategories.clear();
+        mExcludedChannels.clear();
 
         mIsSponsorBlockEnabled = Helpers.parseBoolean(split, 0, VERSION.SDK_INT > 19); // Android 4 may have memory problems
         // categories: index 2
@@ -261,32 +293,28 @@ public class SponsorBlockData {
         if (colorCategories != null) {
             String[] categoriesArr = Helpers.splitArray(colorCategories);
 
-            mColorCategories.clear();
-
             mColorCategories.addAll(Arrays.asList(categoriesArr));
         } else {
-            mColorCategories.clear();
-
             mColorCategories.addAll(mAllCategories);
         }
 
         if (excludedChannels != null) {
             String[] channelsArr = Helpers.splitArray(excludedChannels);
 
-            mExcludedChannels.clear();
-
             mExcludedChannels.addAll(Arrays.asList(channelsArr));
-        } else {
-            mExcludedChannels.clear();
         }
 
         if (actions != null) {
             String[] actionsArr = Helpers.splitArray(actions);
 
-            mActions.clear();
-
             for (String action : actionsArr) {
-                mActions.add(SegmentAction.from(action));
+                // Fork: pula entradas invalidas (antes entrava null no set -> NPE depois)
+                SegmentAction parsed = SegmentAction.from(action);
+
+                if (parsed != null) {
+                    mActions.add(parsed);
+                    actionsRestored = true;
+                }
             }
         }
 
@@ -302,6 +330,8 @@ public class SponsorBlockData {
                 }
             }
         }
+
+        return actionsRestored;
     }
 
     private void persistState() {
@@ -309,10 +339,16 @@ public class SponsorBlockData {
         String actions = Helpers.mergeArray(mActions.toArray());
         String excludedChannels = Helpers.mergeArray(mExcludedChannels.toArray());
 
-        mAppPrefs.setData(SPONSOR_BLOCK_DATA, Helpers.mergeData(
+        String data = Helpers.mergeData(
                 mIsSponsorBlockEnabled, null, null, null,
                 null, null, actions, colorCategories, mIsDontSkipSegmentAgainEnabled,
                 excludedChannels, mIsPaidContentNotificationEnabled, mIgnoredDurationMs
-        ));
+        );
+
+        // Fork fix: grava em dois storages independentes. A copia-sombra (SharedPreferences)
+        // sobrevive a perda/corrupcao do arquivo primario e permite o auto-reparo.
+        // Sombra primeiro: se a escrita do arquivo falhar no meio, a sombra ja tem o estado novo.
+        mAppPrefs.putString(SPONSOR_BLOCK_DATA_SHADOW, data);
+        mAppPrefs.setData(SPONSOR_BLOCK_DATA, data);
     }
 }

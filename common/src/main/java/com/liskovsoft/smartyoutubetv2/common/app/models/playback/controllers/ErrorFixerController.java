@@ -23,7 +23,8 @@ import java.util.List;
 public class ErrorFixerController extends BasePlayerController implements OnLongBuffering {
     private static final String TAG = ErrorFixerController.class.getSimpleName();
     private static final long STREAM_END_THRESHOLD_MS = 180_000;
-    private static final int MAX_RELOAD_PLAYER_RESPONSE_ATTEMPTS = 3;
+    // Fork: 3 -> 5 tentativas (erros SABR transitórios costumam passar no retry extra)
+    private static final int MAX_RELOAD_PLAYER_RESPONSE_ATTEMPTS = 5;
     private final BufferingDetector mBufferingDetector = new BufferingDetector(this);
     private VideoLoaderController mVideoLoaderController;
     private String mReloadPlayerResponseVideoId;

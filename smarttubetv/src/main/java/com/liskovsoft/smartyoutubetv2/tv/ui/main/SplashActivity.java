@@ -93,9 +93,9 @@ public class SplashActivity extends MotherActivity implements SplashView {
         TextView version = findViewById(R.id.fork_splash_version);
 
         if (subtitle != null) {
-            SpannableStringBuilder sb = new SpannableStringBuilder("Fork por ");
-            int nameStart = sb.length();
-            sb.append("MicaelSanPedro");
+            String forkAuthor = getString(R.string.fork_author);
+            SpannableStringBuilder sb = new SpannableStringBuilder(getString(R.string.fork_splash_subtitle_fmt, forkAuthor));
+            int nameStart = sb.length() - forkAuthor.length();
             sb.setSpan(new StyleSpan(Typeface.BOLD), nameStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             sb.setSpan(new ForegroundColorSpan(0xFFFFFFFF), nameStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             subtitle.setText(sb);

@@ -85,7 +85,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="baseado no SmartTube original, por yuliskov"
+            android:text="@string/fork_splash_credits"
             android:textColor="#55555E"
             android:textSize="11sp"/>
     </LinearLayout>

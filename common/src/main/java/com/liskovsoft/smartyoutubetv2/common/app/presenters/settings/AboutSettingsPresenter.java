@@ -44,6 +44,8 @@ public class AboutSettingsPresenter extends BasePresenter<Void> {
 
         String country = LocaleUtility.getCurrentLocale(getContext()).getCountry();
 
+        appendForkInfo(settingsPresenter);
+
         appendUpdateCheckButton(settingsPresenter);
 
         appendAutoUpdateSwitch(settingsPresenter);
@@ -125,6 +127,19 @@ public class AboutSettingsPresenter extends BasePresenter<Void> {
         settingsPresenter.appendSingleButton(releasesOption);
         settingsPresenter.appendSingleButton(sourcesOption);
         //settingsPresenter.appendSingleButton(webSiteOption);
+    }
+
+    // Fork: informacoes do fork (créditos e links proprios)
+    private void appendForkInfo(AppDialogPresenter settingsPresenter) {
+        List<OptionItem> forkOptions = new ArrayList<>();
+
+        forkOptions.add(UiOptionItem.from(getContext().getString(R.string.fork_about_repo),
+                option -> Utils.openLink(getContext(), Utils.toQrCodeLink("https://github.com/MicaelSanPedro/SmartTube"))));
+
+        forkOptions.add(UiOptionItem.from(getContext().getString(R.string.fork_about_releases),
+                option -> Utils.openLink(getContext(), Utils.toQrCodeLink("https://github.com/MicaelSanPedro/SmartTube/releases"))));
+
+        settingsPresenter.appendStringsCategory(getContext().getString(R.string.fork_about_title), forkOptions);
     }
 
     private void appendDonation(AppDialogPresenter settingsPresenter) {

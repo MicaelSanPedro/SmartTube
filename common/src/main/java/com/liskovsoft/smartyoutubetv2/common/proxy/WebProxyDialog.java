@@ -35,6 +35,9 @@ public class WebProxyDialog {
     private final Handler mProxyTestHandler;
     private final ArrayList<Call> mUrlTests;
     private int mNumTests;
+    // Fork fix: guarda o estado do proxy antes do dialogo (cancel nao deve deixar proxy ligado)
+    private boolean mProxyConfirmed;
+    private boolean mWasProxyEnabledBeforeDialog;
 
     public WebProxyDialog(Context context) {
         mContext = context;
@@ -53,9 +56,14 @@ public class WebProxyDialog {
 
     public void enable(boolean checked) {
         if (isSupported()) {
+            if (checked) {
+                // Fork fix (upstream FIXME): captura o estado ANTES de habilitar,
+                // pra restaurar caso o usuario cancele o dialogo.
+                mWasProxyEnabledBeforeDialog = mProxyManager.isProxyEnabled();
+                mProxyConfirmed = false;
+            }
             mProxyManager.saveProxyInfoToPrefs(null, checked);
             if (checked) {
-                // FIXME: If user hit cancel in dialog, proxy remains enabled.
                 showProxyConfigDialog();
             } else {
                 mProxyManager.configureSystemProxy();
@@ -194,6 +202,7 @@ public class WebProxyDialog {
                 .create();
 
         mNumTests = 0;
+        mProxyConfirmed = false;
         mProxyConfigDialog.show();
 
         mProxyConfigDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener((view) -> {
@@ -209,6 +218,7 @@ public class WebProxyDialog {
             } else {
                 Log.d(TAG, "Saving proxy info: " + proxy);
                 mProxyManager.saveProxyInfoToPrefs(proxy, true);
+                mProxyConfirmed = true;
                 // Proxy applied on dismiss
                 //mProxyManager.configureSystemProxy();
                 for (Call call: mUrlTests) call.cancel();
@@ -229,6 +239,16 @@ public class WebProxyDialog {
         });
 
         mProxyConfigDialog.setOnDismissListener(dialog -> {
+            for (Call call: mUrlTests) call.cancel();
+
+            // Fork fix (upstream FIXME): dialogo fechado sem OK (cancel/back).
+            // Restaura o estado anterior pra nao deixar o proxy ligado sem configuracao.
+            if (!mProxyConfirmed) {
+                mProxyManager.saveProxyInfoToPrefs(null, mWasProxyEnabledBeforeDialog);
+                mProxyManager.configureSystemProxy();
+                return;
+            }
+
             Proxy proxy = null;
             try {
                 proxy = validateProxyConfigFields();
@@ -240,7 +260,6 @@ public class WebProxyDialog {
                 // Proxy saved on OK button press
                 //mProxyManager.saveProxyInfoToPrefs(proxy, true);
                 mProxyManager.configureSystemProxy();
-                for (Call call: mUrlTests) call.cancel();
             }
         });
     }

@@ -26,10 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Checkout (com submódulos)
+      - name: Checkout (com submódulos e histórico)
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Definir tag da release
         id: tag
@@ -102,6 +103,9 @@ jobs:
           done
           echo "Total assinado e verificado: $total APK(s)"
 
+      - name: Gerar JSON de atualização (updater do app)
+        run: python3 .github/gen_update_json.py "${{ steps.tag.outputs.tag }}" signed/
+
       - name: Montar notas da release
         run: |
           python3 - "${{ steps.tag.outputs.tag }}" << 'PYEOF'
@@ -123,7 +127,11 @@ jobs:
               rows.append("| `%s` | %s |" % (name, desc))
           with open(".github/release-template.md", encoding="utf-8") as f:
               template = f.read()
-          notes = template.replace("__TAG__", tag).replace("__TABELA__", "\n".join(rows))
+          changelog = ""
+          if os.path.exists("changelog_lines.md"):
+              with open("changelog_lines.md", encoding="utf-8") as f:
+                  changelog = f.read()
+          notes = template.replace("__TAG__", tag).replace("__TABELA__", "\n".join(rows)).replace("__CHANGELOG__", changelog)
           with open("notes.md", "w", encoding="utf-8") as f:
               f.write(notes)
           print("notes.md pronto")
@@ -144,7 +152,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release create -R "$GITHUB_REPOSITORY" "$TAG" signed/*.apk \
+          gh release create -R "$GITHUB_REPOSITORY" "$TAG" signed/*.apk smarttube_fork2.json \
             --title "SmartTube Fork $TAG" \
             --notes-file notes.md \
             --latest
@@ -188,3 +196,34 @@ jobs:
             echo "OK na release: $(basename "$apk")"
           done
           echo "Robozinho conferiu tudo — release 100% válida."
+
+      - name: Verificação 3 - JSON do updater na URL estável
+        env:
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          sleep 15
+          curl -fsSL -o update_check.json "https://github.com/${REPO_NAME}/releases/latest/download/smarttube_fork2.json"
+          python3 - "${REPO_NAME}" << 'PYEOF'
+          import json, sys
+
+          repo = sys.argv[1]
+          with open("update_check.json", encoding="utf-8") as f:
+              data = json.load(f)
+
+          pkg = data.get("package") or {}
+          assert pkg.get("downloadUrl"), "downloadUrl ausente no package"
+          abi_lists = {k: v for k, v in pkg.items() if k.startswith("downloadUrlList")}
+          assert abi_lists, "downloadUrlList_* ausente no package"
+
+          versions = {k: v for k, v in data.items() if k != "package"}
+          assert versions, "nenhuma entrada de versao no JSON"
+          name, info = max(versions.items(), key=lambda kv: kv[1].get("versionCode", 0))
+          assert info.get("versionCode", 0) > 0, "versionCode invalido"
+          assert info.get("changelog"), "changelog vazio"
+
+          urls = [pkg["downloadUrl"]] + [u for lst in abi_lists.values() for u in lst]
+          for u in urls:
+              assert repo in u, f"URL fora do fork: {u}"
+
+          print(f"JSON do updater OK: versao {name} (code {info['versionCode']}), {len(urls)} URL(s) conferidas")
+          PYEOF
