@@ -103,6 +103,12 @@ jobs:
           done
           echo "Total assinado e verificado: $total APK(s)"
 
+      - name: Criar APK de nome fixo (link estável pra TV Downloader)
+        run: |
+          universal="$(ls signed/*universal*.apk | head -1)"
+          cp "$universal" signed/SmartTube_latest.apk
+          echo "Cópia com nome fixo criada: signed/SmartTube_latest.apk"
+
       - name: Gerar JSON de atualização (updater do app)
         run: python3 .github/gen_update_json.py "${{ steps.tag.outputs.tag }}" signed/
 
@@ -123,6 +129,8 @@ jobs:
           rows = []
           for apk in sorted(glob.glob("signed/*.apk")):
               name = os.path.basename(apk)
+              if name == "SmartTube_latest.apk":
+                  continue  # cópia de nome fixo do universal; não entra na tabela
               desc = next((d for key, d in mapping.items() if key in name), "-")
               rows.append("| `%s` | %s |" % (name, desc))
           with open(".github/release-template.md", encoding="utf-8") as f:
@@ -195,6 +203,11 @@ jobs:
             "$APKSIGNER" verify --print-certs "$apk" | grep -q "CN=MicaelSanPedro" || { echo "Certificado errado: $apk"; exit 1; }
             echo "OK na release: $(basename "$apk")"
           done
+          if [ ! -f downloaded/SmartTube_latest.apk ]; then
+            echo "FALTA asset: SmartTube_latest.apk (link estável da TV)"; exit 1
+          fi
+          cmp downloaded/SmartTube_latest.apk downloaded/*universal*.apk || { echo "SmartTube_latest.apk difere do universal"; exit 1; }
+          echo "OK: SmartTube_latest.apk idêntico ao universal (link estável da TV)"
           echo "Robozinho conferiu tudo — release 100% válida."
 
       - name: Verificação 3 - JSON do updater na URL estável
@@ -227,3 +240,17 @@ jobs:
 
           print(f"JSON do updater OK: versao {name} (code {info['versionCode']}), {len(urls)} URL(s) conferidas")
           PYEOF
+
+      - name: Verificação 4 - link estável de download (TV Downloader)
+        env:
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          sleep 15
+          url="https://github.com/${REPO_NAME}/releases/latest/download/SmartTube_latest.apk"
+          code=$(curl -sIL -o /dev/null -w "%{http_code}" "$url")
+          [ "$code" = "200" ] || { echo "Link estável quebrado (HTTP $code): $url"; exit 1; }
+          curl -fsSL -o stable_check.apk "$url"
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          "$APKSIGNER" verify stable_check.apk || { echo "Assinatura inválida no APK do link estável"; exit 1; }
+          "$APKSIGNER" verify --print-certs stable_check.apk | grep -q "CN=MicaelSanPedro" || { echo "Certificado errado no APK do link estável"; exit 1; }
+          echo "Link estável OK: $url"

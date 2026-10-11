@@ -4,6 +4,10 @@ Fork pessoal do SmartTube mantido por [@MicaelSanPedro](https://github.com/Micae
 
 __TABELA__
 
+**📺 Baixar direto na TV (app Downloader):** digite `tinyurl.com/stnfork`
+
+Link fixo — sempre baixa a última release publicada aqui (APK universal, serve em qualquer dispositivo). Link completo equivalente: `https://github.com/MicaelSanPedro/SmartTube/releases/latest/download/SmartTube_latest.apk`
+
 ## O que há de novo
 
 __CHANGELOG__
