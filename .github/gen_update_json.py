@@ -70,7 +70,11 @@ def main():
     def url_for(apk):
         return f"https://github.com/{REPO}/releases/download/{tag}/{os.path.basename(apk)}"
 
-    universal = next((a for a in apks if "universal" in os.path.basename(a)), None)
+    # Universal: primeiro pelo nome fixo (SmartTube_latest.apk, sem versão no arquivo),
+    # depois pelo nome antigo com versão (fallback pra builds locais)
+    universal = next((a for a in apks if os.path.basename(a) == "SmartTube_latest.apk"), None)
+    if universal is None:
+        universal = next((a for a in apks if "universal" in os.path.basename(a)), None)
     fallback = url_for(universal or apks[0])
 
     pkg = {"downloadUrl": fallback, "downloadUrlList": [fallback]}
