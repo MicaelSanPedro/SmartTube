@@ -59,7 +59,9 @@ jobs:
           restore-keys: gradle-
 
       - name: Compilar APKs (ststable release)
-        run: ./gradlew :smarttubetv:assembleStstableRelease --no-daemon --stacktrace
+        run: |
+          chmod +x gradlew
+          ./gradlew :smarttubetv:assembleStstableRelease --no-daemon --stacktrace
 
       - name: Restaurar keystore
         run: |
