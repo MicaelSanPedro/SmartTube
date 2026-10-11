@@ -10,6 +10,14 @@
 
 ---
 
+---
+
+## 📺 Download rápido do fork (pra TV)
+
+**App Downloader (Play Store):** digite `tinyurl.com/stnfork` — link fixo que sempre baixa a última release deste fork (APK universal).
+
+Link completo: `https://github.com/MicaelSanPedro/SmartTube/releases/latest/download/SmartTube_latest.apk` · Todas as releases: [aqui](https://github.com/MicaelSanPedro/SmartTube/releases)
+
 [<img src="images/badge_fdroid.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/app.smarttube.fdroid/)
 [<img src="images/badge_github.png" alt="Get it on GitHub" height="80">](https://github.com/yuliskov/SmartTube/releases)
 
