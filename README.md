@@ -10,8 +10,6 @@
 
 ---
 
----
-
 ## 📺 Download rápido do fork (pra TV)
 
 **App Downloader (Play Store):** digite `tinyurl.com/stnfork` — link fixo que sempre baixa a última release deste fork (APK universal).
