@@ -134,9 +134,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view -R "$GITHUB_REPOSITORY" "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG já existia — removendo pra republicar"
-            gh release delete "$TAG" --yes --cleanup-tag || gh release delete "$TAG" --yes || true
+            gh release delete -R "$GITHUB_REPOSITORY" "$TAG" --yes --cleanup-tag || gh release delete -R "$GITHUB_REPOSITORY" "$TAG" --yes || true
           fi
 
       - name: Publicar release
@@ -144,7 +144,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release create "$TAG" signed/*.apk \
+          gh release create -R "$GITHUB_REPOSITORY" "$TAG" signed/*.apk \
             --title "SmartTube Fork $TAG" \
             --notes-file notes.md \
             --latest
@@ -171,7 +171,7 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           mkdir -p downloaded
-          gh release download "$TAG" -D downloaded --pattern '*.apk'
+          gh release download -R "$GITHUB_REPOSITORY" "$TAG" -D downloaded --pattern '*.apk'
           ls -la downloaded
 
       - name: Verificação 2 - re-conferir APKs já publicados
