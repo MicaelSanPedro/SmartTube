@@ -11,6 +11,7 @@ import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.animation.ValueAnimator;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -18,18 +19,21 @@ import android.widget.TextView;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SplashPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SplashView;
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
+import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 
 public class SplashActivity extends MotherActivity implements SplashView {
     private static final String TAG = SplashActivity.class.getSimpleName();
-    private static final long FORK_SPLASH_MIN_MS = 2400;
+    private static final long FORK_SPLASH_MIN_MS = 2200;
     private Intent mNewIntent;
     private SplashPresenter mPresenter;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private ValueAnimator mGlowPulse;
     private boolean mForkSplashShown;
     private boolean mForkFinishScheduled;
+    private boolean mPresenterStarted;
     private long mForkSplashStartMs;
+    private final Runnable mStartPresenterTask = this::startPresenterFlow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,17 +41,35 @@ public class SplashActivity extends MotherActivity implements SplashView {
 
         mNewIntent = getIntent();
 
-        // Fork intro: shown on cold start from the launcher only.
-        // App init continues behind it, so the actual startup isn't delayed.
-        if (shouldShowForkSplash(savedInstanceState)) {
-            showForkSplash();
-        }
-
         mPresenter = SplashPresenter.instance(this);
         mPresenter.setView(this);
-        mPresenter.onViewInitialized();
+
+        // Fork intro: shown on cold start from the launcher only.
+        // The app flow starts right after the intro, otherwise BrowseActivity
+        // would cover it within a second. External intents skip the intro.
+        if (shouldShowForkSplash(savedInstanceState)) {
+            showForkSplash();
+            Utils.cancelFinishTheApp(this);
+            mHandler.postDelayed(mStartPresenterTask, FORK_SPLASH_MIN_MS);
+        } else {
+            startPresenterFlow();
+        }
 
         //finish();
+    }
+
+    private void startPresenterFlow() {
+        if (mPresenterStarted) {
+            return;
+        }
+
+        mPresenterStarted = true;
+        mPresenter.onViewInitialized();
+    }
+
+    private void skipForkSplash() {
+        mHandler.removeCallbacks(mStartPresenterTask);
+        startPresenterFlow();
     }
 
     private boolean shouldShowForkSplash(Bundle savedInstanceState) {
@@ -169,7 +191,23 @@ public class SplashActivity extends MotherActivity implements SplashView {
 
         mNewIntent = intent;
 
-        mPresenter.onViewInitialized();
+        if (mPresenterStarted) {
+            mPresenter.onViewInitialized();
+        } else {
+            // Don't let external intents wait for the intro
+            skipForkSplash();
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mForkSplashShown && !mPresenterStarted && keyCode != KeyEvent.KEYCODE_BACK) {
+            // Any key (except back) skips the intro
+            skipForkSplash();
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -194,8 +232,8 @@ public class SplashActivity extends MotherActivity implements SplashView {
     public void finishView() {
         long delayMs = getForkSplashRemainingMs();
 
-        // Keep the fork intro on screen for the minimum duration.
-        // Everything else (app init, next activity) already happened behind it.
+        // Safety gate: keep the intro visible for the minimum duration even if
+        // the app flow finishes early (normally it starts after the intro).
         if (delayMs > 50) {
             if (!mForkFinishScheduled) {
                 mForkFinishScheduled = true;
