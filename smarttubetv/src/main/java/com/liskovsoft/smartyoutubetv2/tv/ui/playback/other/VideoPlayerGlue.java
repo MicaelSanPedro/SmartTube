@@ -26,7 +26,6 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.MaxControlsVideoPlayerGlue;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.PlaybackTransportRowPresenter;
-import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.ForkPlaybackControlsRow;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.widget.OnActionLongClickedListener;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.AFRAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.ActionHelpers;
@@ -42,7 +41,6 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.SeekIntervalAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.ShareAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.SoundOffAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.VideoInfoAction;
-import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.OverflowAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.PipAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.PlaybackQueueAction;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.actions.PlaylistAddAction;
@@ -85,10 +83,7 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
     private final PlaybackControlsRow.SkipNextAction mSkipNextAction;
     private final PlaybackControlsRow.FastForwardAction mFastForwardAction;
     private final PlaybackControlsRow.RewindAction mRewindAction;
-    // Fork: botão de funções extras (engrenagem, estilo YouTube TV)
-    private OverflowAction mOverflowAction;
-    // Fork: LinkedHashMap preserva a ordem de registro (menu da engrenagem ordenado)
-    private final Map<Integer, Action> mActions = new java.util.LinkedHashMap<>();
+    private final Map<Integer, Action> mActions = new HashMap<>();
     private final OnActionClickedListener mActionListener;
     private final PlayerTweaksData mPlayerTweaksData;
     private final GeneralData mGeneralData;
@@ -109,9 +104,6 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         mSkipNextAction = new PlaybackControlsRow.SkipNextAction(context);
         mFastForwardAction = new PlaybackControlsRow.FastForwardAction(context);
         mRewindAction = new PlaybackControlsRow.RewindAction(context);
-
-        // Fork: engrenagem que abre o menu com as demais funções do player
-        mOverflowAction = new OverflowAction(context);
 
         ThumbsUpAction thumbsUpAction = new ThumbsUpAction(context);
         ThumbsDownAction thumbsDownAction = new ThumbsDownAction(context);
@@ -162,12 +154,45 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_NEXT)) {
             adapter.add(mSkipNextAction);
         }
-
-        // Fork (estilo YouTube TV): dock central fica MINIMO (play/pause, anterior, proximo).
-        // As demais funcoes (repetir, velocidade, PIP, compartilhar, zoom, etc.) continuam
-        // registradas em mActions e getHiddenActions() as entrega ao menu da engrenagem —
-        // nada e removido. Colocar todas aqui transbordava a fileira unica do player
-        // (era a causa dos botoes sobrepostos).
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_REPEAT_MODE)) {
+            adapter.add(mActions.get(R.id.action_repeat));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_SPEED)) {
+            adapter.add(mActions.get(R.id.action_video_speed));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_PIP)) {
+            adapter.add(mActions.get(R.id.action_pip));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SCREEN_DIMMING)) {
+            adapter.add(mActions.get(R.id.action_screen_dimming));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_CHAT)) {
+            adapter.add(mActions.get(R.id.action_chat));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SEARCH)) {
+            adapter.add(mActions.get(R.id.action_search));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SHARE)) {
+            adapter.add(mActions.get(R.id.action_share));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SEEK_INTERVAL)) {
+            adapter.add(mActions.get(R.id.action_seek_interval));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_ZOOM)) {
+            adapter.add(mActions.get(R.id.action_video_zoom));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_ROTATE)) {
+            adapter.add(mActions.get(R.id.action_rotate));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_FLIP)) {
+            adapter.add(mActions.get(R.id.action_flip));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SOUND_OFF)) {
+            adapter.add(mActions.get(R.id.action_sound_off));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_AFR)) {
+            adapter.add(mActions.get(R.id.action_afr));
+        }
     }
 
     @Override
@@ -175,22 +200,16 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         // Does nothing
         super.onCreateSecondaryActions(adapter);
 
-        // Fork (estilo YouTube TV): dock da ESQUERDA = so 2 pills com texto:
-        // avatar/nome do canal + Inscrever-se. Info, Salvar, Fila, SponsorBlock e stats
-        // ficam no menu da engrenagem (getHiddenActions) — nada e perdido, e a fileira
-        // unica nao transborda (era a causa dos botoes sobrepostos).
+        // MAX: 7 items. But with custom modification it supports more.
+        // Origin: {@link androidx.leanback.widget.ControlBarPresenter#MAX_CONTROLS}
+        // Custom mod: {@link com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.ControlBarPresenter#MAX_CONTROLS}
+
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_HIGH_QUALITY)) {
+            adapter.add(mActions.get(R.id.lb_control_high_quality));
+        }
         if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_OPEN_CHANNEL)) {
             adapter.add(mActions.get(R.id.action_channel));
         }
-        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SUBSCRIBE)) {
-            adapter.add(mActions.get(R.id.action_subscribe));
-        }
-    }
-
-    @Override
-    protected void onCreateTertiaryActions(ArrayObjectAdapter adapter) {
-        // Fork: dock da DIREITA = icones redondos (estilo YouTube TV):
-        // like, dislike, CC, qualidade + engrenagem (funções extras)
         if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_LIKE)) {
             adapter.add(mActions.get(R.id.action_thumbs_up));
         }
@@ -200,10 +219,24 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SUBTITLES)) {
             adapter.add(mActions.get(R.id.lb_control_closed_captioning));
         }
-        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_HIGH_QUALITY)) {
-            adapter.add(mActions.get(R.id.lb_control_high_quality));
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_ADD_TO_PLAYLIST)) {
+            adapter.add(mActions.get(R.id.action_playlist_add));
         }
-        adapter.add(mOverflowAction);
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_SUBSCRIBE)) {
+            adapter.add(mActions.get(R.id.action_subscribe));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_INFO)) {
+            adapter.add(mActions.get(R.id.action_info));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_PLAYBACK_QUEUE)) {
+            adapter.add(mActions.get(R.id.action_playback_queue));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_CONTENT_BLOCK)) {
+            adapter.add(mActions.get(R.id.action_content_block));
+        }
+        if (mPlayerTweaksData.isPlayerButtonEnabled(PlayerTweaksData.PLAYER_BUTTON_VIDEO_STATS)) {
+            adapter.add(mActions.get(R.id.action_video_stats));
+        }
     }
 
     @Override
@@ -280,58 +313,6 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         setActionIndex(mActions.get(buttonId), buttonState);
     }
 
-    /**
-     * Fork: ações registradas que não estão visíveis em nenhum dock
-     * (usadas no menu de extras da engrenagem).
-     */
-    public java.util.List<Action> getHiddenActions() {
-        java.util.List<Action> result = new java.util.ArrayList<>();
-
-        for (Action action : mActions.values()) {
-            if (isVisibleInDocks(action)) {
-                continue;
-            }
-            // Fork: ignora acoes "vazias" (sem icone e sem texto) para nao
-            // renderizar pill morta no menu (ex.: espacadores)
-            boolean noLabel = action.getLabel1() == null
-                    || action.getLabel1().toString().trim().isEmpty();
-            if (noLabel && action.getIcon() == null) {
-                continue;
-            }
-            result.add(action);
-        }
-
-        return result;
-    }
-
-    private boolean isVisibleInDocks(Action action) {
-        PlaybackControlsRow row = getControlsRow();
-
-        if (row == null) {
-            return false;
-        }
-
-        return containsAction(row.getPrimaryActionsAdapter(), action)
-                || containsAction(row.getSecondaryActionsAdapter(), action)
-                || (row instanceof ForkPlaybackControlsRow
-                        && containsAction(((ForkPlaybackControlsRow) row).getTertiaryActionsAdapter(), action))
-                || action == mOverflowAction;
-    }
-
-    private boolean containsAction(androidx.leanback.widget.ObjectAdapter adapter, Action action) {
-        if (adapter == null) {
-            return false;
-        }
-
-        for (int i = 0; i < adapter.size(); i++) {
-            if (adapter.get(i) == action) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public void setChannelIcon(String iconUrl) {
         ChannelAction channelAction = (ChannelAction) mActions.get(R.id.action_channel);
 
@@ -400,12 +381,6 @@ public class VideoPlayerGlue extends MaxControlsVideoPlayerGlue<PlayerAdapter> i
         }
 
         if (checkShortActionDisabled(action)) {
-            return true;
-        }
-
-        // Fork: engrenagem abre o menu com as demais funções (tratado no fragment)
-        if (action == mOverflowAction) {
-            mActionListener.onAction(R.id.action_overflow, 0);
             return true;
         }
 

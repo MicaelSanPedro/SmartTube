@@ -185,24 +185,18 @@ class ControlBarPresenter extends Presenter {
                     }
                 });
                 // MOD: player controls: enable long clicks
-                // Fork: so registra long-click se o presenter souber lidar com isso
-                // (ControlButtonPresenter). O cast incondicional anterior crashava
-                // TODO video com ClassCastException quando um presenter customizado
-                // (ex.: PillActionPresenter do dock de pills) era usado no dock.
-                if (presenter instanceof ControlButtonPresenterSelector.ControlButtonPresenter) {
-                    ((ControlButtonPresenterSelector.ControlButtonPresenter) presenter).setOnLongClickListener(vh, new View.OnLongClickListener() {
-                        @Override
-                        public boolean onLongClick(View v) {
-                            Object item = getDisplayedAdapter().get(position);
-                            if (mOnControlLongClickedListener != null) {
-                                return mOnControlLongClickedListener.onControlLongClicked(itemViewHolder, item,
-                                        mData);
-                            }
-
-                            return false;
+                ((ControlButtonPresenterSelector.ControlButtonPresenter) presenter).setOnLongClickListener(vh, new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        Object item = getDisplayedAdapter().get(position);
+                        if (mOnControlLongClickedListener != null) {
+                            return mOnControlLongClickedListener.onControlLongClicked(itemViewHolder, item,
+                                    mData);
                         }
-                    });
-                }
+
+                        return false;
+                    }
+                });
             }
             if (vh.view.getParent() == null) {
                 mControlBar.addView(vh.view);

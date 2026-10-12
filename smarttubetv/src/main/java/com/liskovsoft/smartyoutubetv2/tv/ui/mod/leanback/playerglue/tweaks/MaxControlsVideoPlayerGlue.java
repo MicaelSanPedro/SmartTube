@@ -1,12 +1,9 @@
 package com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
-import android.widget.TextView;
 import androidx.leanback.media.PlayerAdapter;
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter;
 import androidx.leanback.widget.PlaybackControlsRow;
@@ -54,19 +51,6 @@ public abstract class MaxControlsVideoPlayerGlue<T extends PlayerAdapter>
                         fixThumbOverlapping(viewHolder);
 
                         PlaybackBaseControlGlue<?> glue = (PlaybackBaseControlGlue<?>) obj;
-
-                        // Fork: estilo YouTube TV (titulo grande em negrito com sombra, subtitulo menor)
-                        TextView title = viewHolder.getTitle();
-                        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-                        title.setTextSize(26);
-                        title.setTextColor(Color.WHITE);
-                        title.setShadowLayer(8, 0, 2, 0xCC000000);
-
-                        TextView subtitle = viewHolder.getSubtitle();
-                        subtitle.setTextSize(15);
-                        subtitle.setTextColor(0xCCFFFFFF);
-                        subtitle.setShadowLayer(8, 0, 2, 0xCC000000);
-
                         viewHolder.getTitle().setText(glue.getTitle());
                         viewHolder.getSubtitle().setText(glue.getSubtitle());
                         // MOD: add extra title line

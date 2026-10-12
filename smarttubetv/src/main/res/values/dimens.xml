@@ -134,9 +134,4 @@
     <dimen name="tooltip_vertical_padding_mod">6.5dp</dimen>
     <dimen name="tooltip_y_offset_non_touch_mod">0dp</dimen>
     <dimen name="tooltip_y_offset_touch_mod">16dp</dimen>
-    <!-- Fork: icones/margens da barra de controles do player menores para caber
-         pills + transport + icones numa unica fileira (estilo YouTube TV).
-         Valores originais do leanback: icon 48dp, child margin 24dp. -->
-    <dimen name="lb_control_icon_width">40dp</dimen>
-    <dimen name="lb_playback_controls_child_margin_default">12dp</dimen>
 </resources>

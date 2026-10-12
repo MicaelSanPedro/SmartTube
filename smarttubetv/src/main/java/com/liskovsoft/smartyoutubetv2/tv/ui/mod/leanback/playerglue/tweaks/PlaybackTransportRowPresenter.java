@@ -45,7 +45,6 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.misc.SeekBar;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tooltips.ControlButtonPresenterSelector;
-import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tooltips.PillActionPresenter;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.ControlBarPresenter.OnControlClickedListener;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.ControlBarPresenter.OnControlLongClickedListener;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.ControlBarPresenter.OnControlSelectedListener;
@@ -89,8 +88,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         final ViewGroup mDescriptionDock;
         final ViewGroup mControlsDock;
         final ViewGroup mSecondaryControlsDock;
-        // Fork: dock da direita (like/dislike/CC/qualidade/engrenagem)
-        final ViewGroup mTertiaryControlsDock;
         final TextView mTotalTime;
         final TextView mCurrentTime;
         final TextView mEndingTime;
@@ -112,12 +109,8 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         final StringBuilder mTempBuilder = new StringBuilder();
         ControlBarPresenter.ViewHolder mControlsVh;
         ControlBarPresenter.ViewHolder mSecondaryControlsVh;
-        // Fork: view holder do dock da direita
-        ControlBarPresenter.ViewHolder mTertiaryControlsVh;
         BoundData mControlsBoundData = new BoundData();
         BoundData mSecondaryBoundData = new BoundData();
-        // Fork: bound data do dock da direita
-        BoundData mTertiaryBoundData = new BoundData();
         Presenter.ViewHolder mSelectedViewHolder;
         Object mSelectedItem;
         PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
@@ -561,9 +554,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
             mControlsDock = (ViewGroup) rootView.findViewById(R.id.controls_dock);
             mSecondaryControlsDock =
                     (ViewGroup) rootView.findViewById(R.id.secondary_controls_dock);
-            // Fork: dock da direita
-            mTertiaryControlsDock = (ViewGroup) rootView.findViewById(
-                    com.liskovsoft.smartyoutubetv2.tv.R.id.right_controls_dock);
             mDescriptionViewHolder = descriptionPresenter == null ? null :
                     descriptionPresenter.onCreateViewHolder(mDescriptionDock);
             if (mDescriptionViewHolder != null) {
@@ -878,8 +868,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
     Presenter mDescriptionPresenter;
     final ControlBarPresenter mPlaybackControlsPresenter;
     final ControlBarPresenter mSecondaryControlsPresenter;
-    // Fork: presenter das pills do dock da esquerda
-    PillActionPresenter mPillActionPresenter;
     OnActionClickedListener mOnActionClickedListener;
     OnActionLongClickedListener mOnActionLongClickedListener;
 
@@ -943,9 +931,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         mSecondaryControlsPresenter.setOnControlClickedListener(mOnControlClickedListener);
         mPlaybackControlsPresenter.setOnControlLongClickedListener(mOnControlLongClickedListener);
         mSecondaryControlsPresenter.setOnControlLongClickedListener(mOnControlLongClickedListener);
-
-        // Fork: presenter das pills do dock da esquerda (texto sempre visivel)
-        mPillActionPresenter = new PillActionPresenter();
     }
 
     /**
@@ -1072,13 +1057,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         vh.mSecondaryControlsVh = (ControlBarPresenter.ViewHolder) mSecondaryControlsPresenter
                 .onCreateViewHolder(vh.mSecondaryControlsDock);
         vh.mSecondaryControlsDock.addView(vh.mSecondaryControlsVh.view);
-
-        // Fork: cria o dock da direita (icones redondos)
-        if (vh.mTertiaryControlsDock != null) {
-            vh.mTertiaryControlsVh = (ControlBarPresenter.ViewHolder) mSecondaryControlsPresenter
-                    .onCreateViewHolder(vh.mTertiaryControlsDock);
-            vh.mTertiaryControlsDock.addView(vh.mTertiaryControlsVh.view);
-        }
         ((PlaybackTransportRowView) vh.view.findViewById(R.id.transport_row))
                 .setOnUnhandledKeyListener(new PlaybackTransportRowView.OnUnhandledKeyListener() {
                 @Override
@@ -1122,26 +1100,10 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         mPlaybackControlsPresenter.onBindViewHolder(vh.mControlsVh, vh.mControlsBoundData);
 
         vh.mSecondaryBoundData.adapter = row.getSecondaryActionsAdapter();
-        // Fork: dock da esquerda usa pills com texto sempre visivel (estilo YouTube TV).
-        // PillActionPresenter estende ControlButtonPresenter (fix ClassCastException).
-        vh.mSecondaryBoundData.presenter = mPillActionPresenter;
+        vh.mSecondaryBoundData.presenter = vh.getPresenter(false);
         vh.mSecondaryBoundData.mRowViewHolder = vh;
         mSecondaryControlsPresenter.onBindViewHolder(vh.mSecondaryControlsVh,
                 vh.mSecondaryBoundData);
-
-        // Fork: bind do dock da direita (tertiary)
-        if (vh.mTertiaryControlsDock != null
- && row instanceof ForkPlaybackControlsRow
-                && ((ForkPlaybackControlsRow) row).getTertiaryActionsAdapter() != null) {
-            vh.mTertiaryControlsDock.setVisibility(View.VISIBLE);
-            vh.mTertiaryBoundData.adapter = ((ForkPlaybackControlsRow) row).getTertiaryActionsAdapter();
-            vh.mTertiaryBoundData.presenter = vh.getPresenter(false);
-            vh.mTertiaryBoundData.mRowViewHolder = vh;
-            mSecondaryControlsPresenter.onBindViewHolder(vh.mTertiaryControlsVh,
-                    vh.mTertiaryBoundData);
-        } else if (vh.mTertiaryControlsDock != null) {
-            vh.mTertiaryControlsDock.setVisibility(View.GONE);
-        }
 
         vh.setTotalTime(row.getDuration());
         vh.setCurrentPosition(row.getCurrentPosition());
@@ -1159,10 +1121,6 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         }
         mPlaybackControlsPresenter.onUnbindViewHolder(vh.mControlsVh);
         mSecondaryControlsPresenter.onUnbindViewHolder(vh.mSecondaryControlsVh);
-        // Fork: unbind do dock da direita
-        if (vh.mTertiaryControlsVh != null) {
-            mSecondaryControlsPresenter.onUnbindViewHolder(vh.mTertiaryControlsVh);
-        }
         if (row != null) {
             row.setOnPlaybackProgressChangedListener(null);
         }
