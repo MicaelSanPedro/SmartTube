@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fork: fundo do popup de funções extras (cartão escuro arredondado) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#F2101010" />
+    <corners android:radius="16dp" />
+</shape>

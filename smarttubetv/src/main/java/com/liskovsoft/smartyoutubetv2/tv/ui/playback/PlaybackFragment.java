@@ -80,6 +80,7 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.Playb
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.SeekModePlaybackFragment;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.SurfacePlaybackFragmentGlueHost;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.BackboneQueueNavigator;
+import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.ForkActionsPopup;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue.OnActionClickedListener;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.previewtimebar.StoryboardSeekDataProvider;
@@ -811,6 +812,12 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
 
         @Override
         public void onAction(int actionId, int actionIndex) {
+            // Fork: engrenagem abre o menu de funções extras (estilo YouTube TV)
+            if (actionId == R.id.action_overflow) {
+                showForkActionsPopup();
+                return;
+            }
+
             mPlaybackPresenter.onButtonClicked(actionId, actionIndex);
         }
 
@@ -828,6 +835,21 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
         public boolean onKeyDown(int keyCode) {
             return mPlaybackPresenter.onKeyDown(keyCode);
         }
+    }
+
+    private void showForkActionsPopup() {
+        if (mPlayerGlue == null || getContext() == null) {
+            return;
+        }
+
+        ForkActionsPopup.show(
+                getContext(),
+                mPlayerGlue.getHiddenActions(),
+                (actionId, actionIndex) -> {
+                    if (mPlaybackPresenter != null) {
+                        mPlaybackPresenter.onButtonClicked(actionId, actionIndex);
+                    }
+                });
     }
 
     // Begin Ui events

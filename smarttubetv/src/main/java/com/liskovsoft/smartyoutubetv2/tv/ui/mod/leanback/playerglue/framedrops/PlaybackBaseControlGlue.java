@@ -30,6 +30,7 @@ import androidx.leanback.media.PlayerAdapter;
 import androidx.leanback.widget.Action;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.OnActionClickedListener;
+import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.ForkPlaybackControlsRow;
 import androidx.leanback.widget.PlaybackControlsRow;
 import androidx.leanback.widget.PlaybackRowPresenter;
 import androidx.leanback.widget.PlaybackTransportRowPresenter;
@@ -282,7 +283,8 @@ public abstract class PlaybackBaseControlGlue<T extends PlayerAdapter> extends P
 
     void onCreateDefaultControlsRow() {
         if (mControlsRow == null) {
-            PlaybackControlsRow controlsRow = new PlaybackControlsRow(this);
+            // Fork: row com dock terciario (icones da direita)
+            PlaybackControlsRow controlsRow = new ForkPlaybackControlsRow(this);
             setControlsRow(controlsRow);
         }
     }
@@ -294,6 +296,13 @@ public abstract class PlaybackBaseControlGlue<T extends PlayerAdapter> extends P
     }
 
     protected abstract PlaybackRowPresenter onCreateRowPresenter();
+
+    /**
+     * Fork: hook para popular o dock da direita (terciario).
+     */
+    protected void onCreateTertiaryActions(ArrayObjectAdapter adapter) {
+        // Does nothing
+    }
 
     /**
      * Sets the controls to auto hide after a timeout when media is playing.
@@ -343,6 +352,14 @@ public abstract class PlaybackBaseControlGlue<T extends PlayerAdapter> extends P
                     new ControlButtonPresenterSelector(PlayerData.instance(getContext()).isTooltipsEnabled()));
             onCreateSecondaryActions(secondaryActions);
             getControlsRow().setSecondaryActionsAdapter(secondaryActions);
+        }
+        // Fork: add tertiary actions (dock da direita)
+        if (mControlsRow instanceof ForkPlaybackControlsRow
+                && ((ForkPlaybackControlsRow) mControlsRow).getTertiaryActionsAdapter() == null) {
+            ArrayObjectAdapter tertiaryActions = new ArrayObjectAdapter(
+                    new ControlButtonPresenterSelector(PlayerData.instance(getContext()).isTooltipsEnabled()));
+            onCreateTertiaryActions(tertiaryActions);
+            ((ForkPlaybackControlsRow) mControlsRow).setTertiaryActionsAdapter(tertiaryActions);
         }
         updateControlsRow();
     }

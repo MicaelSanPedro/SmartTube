@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fork: id do botao de funcoes extras (menu estilo YouTube TV) -->
+    <item name="action_overflow" type="id" />
+</resources>
