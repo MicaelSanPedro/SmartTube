@@ -46,7 +46,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
                 android:clipToPadding="false"
-                android:gravity="top" />
+                android:gravity="top"
+                android:paddingEnd="230dp"
+                tools:ignore="RtlHardcoded" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/thumbs_row_wrapper"
@@ -149,36 +151,42 @@
             android:focusable="true"
             android:focusableInTouchMode="true" />
 
-        <!-- Fork: fileira unica de controles (pills a esquerda, transport no centro, icones a direita) -->
-        <RelativeLayout android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layoutDirection="ltr"
-                        android:layout_marginLeft="@dimen/lb_playback_transport_controlbar_margin_start"
-                        tools:ignore="RtlHardcoded" >
+        <!-- Fork: fileira unica de controles (pills a esquerda, transport no centro, icones a direita).
+             LinearLayout (e nao RelativeLayout) para que os docks NUNCA se sobreponham:
+             laterais = wrap_content nas bordas, transport ocupa o espaco do meio (weight) e fica
+             centrado nele. Se o conteudo for largo demais, o dock do meio encolhe primeiro
+             (degrada com corte, nunca com colisao). -->
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal"
+                      android:layoutDirection="ltr"
+                      android:gravity="center_vertical"
+                      android:layout_marginLeft="@dimen/lb_playback_transport_controlbar_margin_start"
+                      tools:ignore="RtlHardcoded" >
 
             <FrameLayout
                 android:id="@+id/secondary_controls_dock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
+                android:layout_gravity="start|center_vertical"
             />
 
             <FrameLayout
                 android:id="@+id/controls_dock"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
             />
 
             <FrameLayout
                 android:id="@+id/right_controls_dock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
+                android:layout_gravity="end|center_vertical"
             />
-        </RelativeLayout>
+        </LinearLayout>
 
     </com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.PlaybackTransportRowView>
 </LinearLayout>

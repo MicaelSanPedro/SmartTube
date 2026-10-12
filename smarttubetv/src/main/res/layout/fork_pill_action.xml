@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fork: pill do player com icone + texto sempre visivel (estilo YouTube TV) -->
+<!-- Fork: pill do player com icone + texto sempre visivel (estilo YouTube TV).
+     Compacta: paddings menores e texto limitado (maxWidth) para caber na fileira. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -8,16 +9,16 @@
     android:background="@drawable/fork_pill_bg"
     android:focusable="true"
     android:clickable="true"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:layout_marginEnd="10dp"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginEnd="8dp"
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
@@ -26,7 +27,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/fork_pill_text"
-        android:textSize="15sp"
+        android:textSize="13sp"
+        android:maxWidth="110dp"
         android:maxLines="1"
         android:ellipsize="end" />
 </LinearLayout>
