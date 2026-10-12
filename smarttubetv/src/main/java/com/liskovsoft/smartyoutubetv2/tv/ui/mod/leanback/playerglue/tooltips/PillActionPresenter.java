@@ -16,8 +16,22 @@ import com.liskovsoft.smartyoutubetv2.tv.R;
 /**
  * Fork: presenter que renderiza uma Action como "pill" translucida
  * (icone + texto sempre visivel), estilo YouTube TV.
+ *
+ * IMPORTANTE (fix de crash): estende ControlButtonPresenter porque o
+ * ControlBarPresenter faz cast do presenter para
+ * ControlButtonPresenterSelector.ControlButtonPresenter ao registrar o
+ * long-click (bindControlToAction). Sem essa heranca, TODO video
+ * crashava com ClassCastException no primeiro bind do dock secundario.
+ * Todos os metodos do pai que dependem do layout do leanback
+ * (ActionViewHolder / R.id.button) sao sobrescritos abaixo.
  */
-public class PillActionPresenter extends Presenter {
+public class PillActionPresenter extends ControlButtonPresenterSelector.ControlButtonPresenter {
+    public PillActionPresenter() {
+        // Construtor package-private (mesmo pacote): passa o layout da pill,
+        // embora onCreateViewHolder seja sobrescrito e nao use esse campo.
+        super(R.layout.fork_pill_action);
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         View view = LayoutInflater.from(parent.getContext())
@@ -43,18 +57,31 @@ public class PillActionPresenter extends Presenter {
             vh.mIcon.setImageDrawable(action.getIcon());
             vh.mIcon.setVisibility(View.VISIBLE);
         } else {
+            vh.mIcon.setImageDrawable(null);
             vh.mIcon.setVisibility(View.GONE);
         }
     }
 
     @Override
     public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        // nothing to release
+        PillViewHolder vh = (PillViewHolder) viewHolder;
+        vh.mIcon.setImageDrawable(null);
+        vh.mLabel.setText(null);
+        vh.mIcon.clearColorFilter();
     }
 
     @Override
     public void setOnClickListener(Presenter.ViewHolder viewHolder, View.OnClickListener listener) {
+        // A pill inteira e clicavel/focavel; nao usa o padrao do pai, que
+        // depende da view R.id.button do layout original do leanback.
         viewHolder.view.setOnClickListener(listener);
+    }
+
+    @Override
+    public void setOnLongClickListener(Presenter.ViewHolder viewHolder, View.OnLongClickListener listener) {
+        // Mesmo motivo do setOnClickListener: o pai faria cast para
+        // ActionViewHolder e quebraria com o ViewHolder da pill.
+        viewHolder.view.setOnLongClickListener(listener);
     }
 
     static class PillViewHolder extends Presenter.ViewHolder {

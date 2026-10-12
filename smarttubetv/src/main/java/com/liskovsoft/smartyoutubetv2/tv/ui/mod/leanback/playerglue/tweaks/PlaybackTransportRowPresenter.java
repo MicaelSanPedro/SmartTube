@@ -1122,9 +1122,9 @@ public class PlaybackTransportRowPresenter extends PlaybackRowPresenter {
         mPlaybackControlsPresenter.onBindViewHolder(vh.mControlsVh, vh.mControlsBoundData);
 
         vh.mSecondaryBoundData.adapter = row.getSecondaryActionsAdapter();
-        // Fork: dock da esquerda usa pills com texto sempre visivel (estilo YouTube TV)
-        vh.mSecondaryBoundData.presenter = mPillActionPresenter != null
-                ? mPillActionPresenter : vh.getPresenter(false);
+        // Fork: dock da esquerda usa pills com texto sempre visivel (estilo YouTube TV).
+        // PillActionPresenter estende ControlButtonPresenter (fix ClassCastException).
+        vh.mSecondaryBoundData.presenter = mPillActionPresenter;
         vh.mSecondaryBoundData.mRowViewHolder = vh;
         mSecondaryControlsPresenter.onBindViewHolder(vh.mSecondaryControlsVh,
                 vh.mSecondaryBoundData);
